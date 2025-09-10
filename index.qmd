@@ -7,23 +7,20 @@ engine: knitr
 Hi! I’m **Selena Li**. This site hosts my STA 9750 mini-projects and course project.
 
 - - -
-```{r}
-#| echo: false
-#| message: false
-#| warning: false
-
-if(!require("leaflet")){
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+if (!require("leaflet")) {
   options(repos = c(CRAN = "https://cloud.r-project.org"))
   install.packages("leaflet")
   library(leaflet)
 }
 
 baruch_longitude <- -73.98333
-baruch_latitude  <-  40.75028
+baruch_latitude  <- 40.75028
 
 leaflet() |>
   addTiles() |>
   setView(baruch_longitude, baruch_latitude, zoom = 17) |>
   addPopups(baruch_longitude, baruch_latitude,
             "I am a Master's student at <b>Baruch College</b>!")
+```
 
