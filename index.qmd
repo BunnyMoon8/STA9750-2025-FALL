@@ -1,9 +1,12 @@
 ---
 title: "Selena Li — STA 9750 Portfolio"
+engine: knitr
 ---
+
 
 Hi! I’m **Selena Li**. This site hosts my STA 9750 mini-projects and course project.
 
+- - -
 ```{r}
 #| echo: false
 #| message: false
@@ -23,5 +26,4 @@ leaflet() |>
   setView(baruch_longitude, baruch_latitude, zoom = 17) |>
   addPopups(baruch_longitude, baruch_latitude,
             "I am a Master's student at <b>Baruch College</b>!")
-
 
