@@ -1,0 +1,698 @@
+---
+title: "STA 9750 Mini-Project #01 – MP01"
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    code-fold: true
+---
+
+# Project Purpose
+
+For this project, we will deal with two separate data files, taken from Netflix’s TuDum Top 10. These are:
+
+-   Global Top 10
+-   Country-wide Top 10
+
+The following code will download the Netflix data and create TSV³ files in a `data/mp01` directory. If this doesn’t work for whatever reason, you can download the data directly from Netflix, though you will need to make sure you are getting the right files and storing them in a location and format suitable for this mini-project.
+
+# Acquire Data
+
+```{r}
+if(!dir.exists(file.path("data", "mp01"))){
+    dir.create(file.path("data", "mp01"), showWarnings=FALSE, recursive=TRUE)
+}
+
+GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
+
+if(!file.exists(GLOBAL_TOP_10_FILENAME)){
+    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv", 
+                  destfile=GLOBAL_TOP_10_FILENAME)
+}
+
+COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
+
+if(!file.exists(COUNTRY_TOP_10_FILENAME)){
+    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", 
+                  destfile=COUNTRY_TOP_10_FILENAME)
+}
+```
+
+```{r}
+# Load libraries
+library(readr)
+library(dplyr)
+
+# File paths
+GLOBAL_TOP_10_FILENAME  <- file.path("data", "mp01", "global_top10_alltime.csv")
+COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
+
+# Import datasets
+GLOBAL_TOP_10 <- read_tsv(GLOBAL_TOP_10_FILENAME)
+
+# Task 2: Fix "N/A" values in season_title for GLOBAL_TOP_10
+GLOBAL_TOP_10 <- GLOBAL_TOP_10 |>
+  mutate(season_title = if_else(season_title == "N/A", NA, season_title),
+         runtime_minutes = round(60 * runtime))
+
+# Task 3: Import per-country dataset, automatically treating "N/A" as NA
+
+COUNTRY_TOP_10 <- read_tsv(COUNTRY_TOP_10_FILENAME, na = "N/A")
+```
+
+```{r}
+glimpse(GLOBAL_TOP_10)
+glimpse(COUNTRY_TOP_10)
+```
+
+# Step1: Preview the first 20 rows
+```{r}
+library(DT)
+GLOBAL_TOP_10 |> 
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE))
+```
+
+# Step2: Improve column and formatting
+```{r}
+library(stringr)
+format_titles <- function(df){
+    colnames(df) <- str_replace_all(colnames(df), "_", " ") |> str_to_title()
+    df
+}
+
+GLOBAL_TOP_10 |> 
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+```
+
+# Step3: Drop season_title column for films
+```{r}
+GLOBAL_TOP_10 |> 
+    select(-season_title) |>
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+```
+
+# Step4: Convert runtime to minutes
+```{r}
+GLOBAL_TOP_10 |> 
+    mutate(`runtime_(minutes)` = round(60 * runtime)) |>
+    select(-season_title, 
+           -runtime) |>
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+```
+
+# Questions
+
+**Q1: How many different countries does Netflix operate in?**
+```{r}
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 |>
+  rename(country = any_of(c("country", "country_name")))
+
+countries_tbl <- COUNTRY_TOP_10 |>
+  distinct(country)
+
+n_countries <- nrow(countries_tbl)
+
+n_countries
+```
+**Answer:** Netflix appears in **`r n_countries`** distinct countries, based on countries that have ever reported viewing in the dataset.
+
+**Q2:Which non-English-language film has spent the most cumulative weeks in the global top 10? How many weeks did it spend?**
+```{r}
+# Non-English film with the most cumulative weeks in the GLOBAL Top 10
+library(dplyr)
+
+nonenglish_weeks <- GLOBAL_TOP_10 %>%
+  filter(category == "Films (Non-English)") %>%
+  group_by(show_title) %>%
+  summarise(total_weeks = n_distinct(week), .groups = "drop") %>%
+  arrange(desc(total_weeks), show_title)
+
+top_nonenglish <- slice_head(nonenglish_weeks, n = 1)
+
+# (Optional) peek result
+top_nonenglish
+```
+**Answer:**The non-English-language film with the most cumulative weeks in the global Top 10 is **`r top_nonenglish$show_title`**, with **`r top_nonenglish$total_weeks`** weeks.
+
+**Q3:What is the longest film (English or non-English) to have ever appeared in the Netflix global Top 10? How long is it in minutes?**
+```{r}
+#| label: q_longest_film
+# Longest film (English or Non-English) ever in the GLOBAL Top 10
+longest <- GLOBAL_TOP_10 |>
+  dplyr::filter(grepl("^Films", category), !is.na(runtime)) |>
+  dplyr::mutate(runtime_minutes = round(60 * runtime)) |>
+  dplyr::group_by(show_title) |>
+  dplyr::summarise(runtime_minutes = max(runtime_minutes), .groups = "drop") |>
+  dplyr::slice_max(runtime_minutes, n = 1, with_ties = FALSE)
+
+longest_film_title   <- longest$show_title
+longest_film_minutes <- longest$runtime_minutes
+
+longest_film_title 
+longest_film_minutes
+```
+**Answer:** The longest film to appear in the global Top 10 is **`r longest_film_title`**, with a runtime of **`r longest_film_minutes`** minutes.
+
+**Q4:For each of the four categories, what program has the most total hours of global viewership?**
+```{r}
+library(dplyr); library(DT); library(scales)
+
+q4 <- GLOBAL_TOP_10 |>
+  mutate(program = if_else(is.na(season_title) | season_title == "N/A",
+                           show_title, paste(show_title, "—", season_title))) |>
+  group_by(category, program) |>
+  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") |>
+  group_by(category) |>
+  slice_max(total_hours, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  mutate(total_hours = scales::number(total_hours, accuracy = 1, big.mark = ",")) |>
+  arrange(category)
+
+DT::datatable(q4, rownames = FALSE,
+              options = list(pageLength = 4, dom = "t"),
+              caption = "Top program by total global viewing hours in each category")
+
+```
+
+**Q5:Which TV show had the longest run in a country’s Top 10? How long was this run and in what country did it occur?**
+```{r}
+# Q5 — Longest TV Top-10 run in any country (short)
+library(dplyr)
+
+longest_run <- COUNTRY_TOP_10 %>%
+  rename(country = any_of(c("country", "country_name"))) %>%
+  filter(grepl("^TV", category)) %>%
+  arrange(country, show_title, season_title, week) %>%
+  group_by(country, show_title, season_title) %>%
+  mutate(gap = as.integer(week - lag(week)),
+         grp = cumsum(is.na(gap) | gap != 7)) %>%
+  group_by(country, show_title, season_title, grp) %>%
+  summarise(streak_weeks = n(),
+            start_week = min(week), end_week = max(week), .groups = "drop") %>%
+  slice_max(streak_weeks, n = 1, with_ties = FALSE) %>%
+  mutate(program = if_else(is.na(season_title) | season_title == "N/A",
+                           show_title, paste(show_title, "—", season_title))) %>%
+  select(country, program, streak_weeks, start_week, end_week)
+
+# Inline vars
+q5_program <- longest_run$program
+q5_country <- longest_run$country
+q5_weeks   <- longest_run$streak_weeks
+q5_start   <- longest_run$start_week
+q5_end     <- longest_run$end_week
+```
+**Answer:**The longest run was **`r q5_program`**, with **`r q5_weeks`** consecutive weeks in **`r q5_country`** (from r q5_start to r q5_end).
+
+**Q6:Netflix provides over 200 weeks of service history for all but one country in our data set. Which country is this and when did Netflix cease operations in that country?**
+```{r}
+#| label: q6
+library(dplyr); library(DT)
+
+# standardize country column
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 |>
+  rename(country = any_of(c("country","country_name")))
+
+# country with the shortest service-history window
+q6_row <- COUNTRY_TOP_10 |>
+  group_by(country) |>
+  summarise(
+    total_weeks = n_distinct(week),
+    last_week   = max(week),
+    .groups = "drop"
+  ) |>
+  arrange(total_weeks, country) |>
+  slice(1)
+
+# scalars for inline text
+q6_country     <- q6_row$country
+q6_last_week   <- q6_row$last_week
+q6_total_weeks <- q6_row$total_weeks
+
+# small 1-row table
+DT::datatable(
+  q6_row, rownames = FALSE,
+  caption = "Country with the shortest service history (and last recorded week)",
+  options = list(pageLength = 1, dom = "t")
+)
+```
+
+**Answer:** The country is **`r q6_country`**, and Netflix’s last recorded week there was **`r q6_last_week`** (a total of **`r q6_total_weeks`** weeks of history).
+
+**Q7:What is the total viewership of the TV show Squid Game? Note that there are three seasons total and we are looking for the total number of hours watched across all seasons.**
+```{r}
+#| label: q7-build
+library(dplyr); library(DT)
+
+# Sum hours for Squid Game (exclude "Squid Game: The Challenge")
+squid_by_season <- GLOBAL_TOP_10 |>
+  filter(grepl("^TV", category),
+         grepl("^Squid Game(?!: The Challenge)", show_title, perl = TRUE)) |>
+  group_by(show_title, season_title) |>
+  summarise(hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") |>
+  arrange(season_title)
+
+squid_total_hours <- sum(squid_by_season$hours, na.rm = TRUE)
+```
+
+```{r}
+#| label: q7-table
+DT::datatable(
+  squid_by_season |> mutate(hours = scales::comma(hours)),
+  rownames = FALSE,
+  caption = "Squid Game — total global viewing hours by season",
+  options = list(pageLength = 10, dom = "t")
+)
+```
+
+**Answer:** The total global viewing time for **Squid Game** across all seasons is **`r scales::comma(squid_total_hours)`** hours.
+
+**Q8:The movie Red Notice has a runtime of 1 hour and 58 minutes. Approximately how many views did it receive in 2021? Note that Netflix does not provide the weekly_views values that far back in the past, but you can compute it yourself using the total view time and the runtime.**
+```{r}
+#| label: q8-red-notice
+#| message: false
+library(dplyr)
+suppressPackageStartupMessages(library(lubridate))
+
+# Runtime: 1 hour 58 minutes = 1.9667 hours
+runtime_hours <- 1 + 58/60
+
+# Total global watch-hours for Red Notice in 2021
+red_2021_hours <- GLOBAL_TOP_10 |>
+  filter(show_title == "Red Notice", year(week) == 2021) |>
+  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") |>
+  pull(total_hours)
+
+# Approximate views = total_hours / runtime
+red_2021_views <- red_2021_hours / runtime_hours
+
+# Formatted values for inline prose
+red_2021_hours_fmt <- scales::comma(red_2021_hours)
+red_2021_views_fmt <- scales::comma(round(red_2021_views))
+```
+
+**Answer:** In **2021**, *Red Notice* accumulated **`r red_2021_hours_fmt`** hours of viewing.  
+Dividing by its **118-minute** runtime (~**`r round(runtime_hours, 4)`** hours) gives approximately **`r red_2021_views_fmt`** views.
+
+**Q9:How many Films reached Number 1 in the US but did not originally debut there? That is, find films that first appeared on the Top 10 chart at, e.g., Number 4 but then became more popular and eventually hit Number 1? What is the most recent film to pull this off?**
+```{r}
+#| label: q9-us-films-later-1
+#| message: false
+library(dplyr); library(DT)
+
+# Ensure the country column name is standardized
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 |>
+  rename(country = any_of(c("country","country_name")))
+
+# US films only (English & Non-English)
+us_films <- COUNTRY_TOP_10 |>
+  filter(country == "United States", grepl("^Films", category)) |>
+  arrange(show_title, week)
+
+# Per-film debut, peak, and first week at #1
+us_summary <- us_films |>
+  group_by(show_title) |>
+  summarise(
+    debut_week = min(week),
+    debut_rank = weekly_rank[which.min(week)],
+    best_rank  = min(weekly_rank),
+    first_week_at_1 = if (any(weekly_rank == 1)) min(week[weekly_rank == 1]) else as.Date(NA),
+    .groups = "drop"
+  )
+
+# Films that debuted below #1 but later reached #1
+later_num1 <- us_summary |>
+  filter(debut_rank > 1, best_rank == 1) |>
+  arrange(desc(first_week_at_1))
+
+n_later_num1 <- nrow(later_num1)
+most_recent_title <- later_num1$show_title[1]
+most_recent_date  <- later_num1$first_week_at_1[1]
+
+# (Optional) small table
+DT::datatable(
+  later_num1 |> select(show_title, debut_week, debut_rank, first_week_at_1),
+  rownames = FALSE,
+  caption  = "Films that debuted below #1 in the US but later reached #1 (most recent first)",
+  options  = list(pageLength = 10, dom = "t")
+)
+```
+
+**Answer:** In total, **`r n_later_num1`** films reached **#1** in the US after **debuting below #1**.  
+The most recent was **`r most_recent_title`**, first hitting #1 on **`r most_recent_date`**.
+
+**Q10:Which TV show/season hit the top 10 in the most countries in its debut week? In how many countries did it chart?** 
+```{r}
+#| label: q10-tv-debut
+#| message: false
+library(dplyr)
+
+# Standardize country column; TV only
+tv_ctry <- COUNTRY_TOP_10 |>
+  rename(country = any_of(c("country","country_name"))) |>
+  filter(grepl("^TV", category))
+
+# Debut week for each show/season
+tv_debuts <- tv_ctry |>
+  group_by(show_title, season_title) |>
+  summarise(debut_week = min(week), .groups = "drop")
+
+# Countries where each show/season charted in that debut week
+tv_debut_spread <- tv_ctry |>
+  inner_join(tv_debuts, by = c("show_title","season_title")) |>
+  filter(week == debut_week) |>
+  group_by(show_title, season_title, debut_week) |>
+  summarise(num_countries = n_distinct(country), .groups = "drop") |>
+  arrange(desc(num_countries), debut_week, show_title, season_title)
+
+# Top result (break ties by earliest debut)
+q10_top <- tv_debut_spread |> slice(1)
+
+# Inline helpers
+q10_title <- q10_top$show_title
+q10_season <- ifelse(is.na(q10_top$season_title), "N/A", q10_top$season_title)
+q10_countries <- q10_top$num_countries
+q10_week <- q10_top$debut_week
+```
+
+(Optional) quick table:
+
+```{r}
+#| label: q10-table
+DT::datatable(tv_debut_spread |> head(25),
+              rownames = FALSE,
+              caption = "Top TV debuts by number of countries (first 25)",
+              options = list(pageLength = 25, dom = "t"))
+```
+
+**Answer:** The widest debut was **`r q10_title` — `r q10_season`**, which hit the Top 10 in **`r q10_countries`** countries during the week of **`r q10_week`**.
+
+## Press Release 1: Upcoming Season of *Stranger Things*
+
+```{r}
+#| label: pr1-stranger-facts
+#| message: false
+#| warning: false
+library(dplyr)
+library(scales)
+
+# 1) Global totals for Stranger Things (all seasons)
+st_global <- GLOBAL_TOP_10 |>
+  filter(grepl("^TV", category), show_title == "Stranger Things")
+
+st_total_hours     <- sum(st_global$weekly_hours_viewed, na.rm = TRUE)
+st_total_weeks     <- dplyr::n_distinct(st_global$week)
+st_total_hours_fmt <- scales::comma(st_total_hours)
+
+# 2) Countries where Stranger Things (any season) charted
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 |>
+  rename(country = any_of(c("country","country_name")))
+st_country_count <- COUNTRY_TOP_10 |>
+  filter(grepl("^TV", category), show_title == "Stranger Things") |>
+  summarise(n_countries = dplyr::n_distinct(country), .groups = "drop") |>
+  pull(n_countries)
+
+# 3) Rank within TV (English) by total global hours (all-time)
+tv_eng_rank <- GLOBAL_TOP_10 |>
+  filter(category == "TV (English)") |>
+  group_by(show_title) |>
+  summarise(total_hours = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") |>
+  arrange(desc(total_hours)) |>
+  mutate(rank = row_number())
+
+st_rank <- tv_eng_rank$rank[tv_eng_rank$show_title == "Stranger Things"]
+
+# Short comparison phrase
+if (!is.na(st_rank) && st_rank == 1) {
+  comp <- tv_eng_rank |> slice(2)
+  st_comp_phrase <- paste0("leading #2 ", comp$show_title, " (", scales::comma(comp$total_hours), " hours).")
+} else if (!is.na(st_rank)) {
+  comp <- tv_eng_rank |> slice(1)
+  st_comp_phrase <- paste0("ranking #", st_rank, " all-time among TV (English), behind ",
+                           comp$show_title, " (", scales::comma(comp$total_hours), " hours).")
+} else {
+  st_comp_phrase <- ""
+}
+
+# 4) Most-watched season (extra fact + chart data)
+st_by_season <- st_global |>
+  group_by(season_title) |>
+  summarise(hours = sum(weekly_hours_viewed, na.rm = TRUE),
+            weeks = n_distinct(week), .groups = "drop") |>
+  arrange(desc(hours))
+
+st_top_season_name  <- st_by_season$season_title[1]
+st_top_season_hours <- scales::comma(st_by_season$hours[1])
+```
+
+**Headline:** *`r scales::comma(st_total_hours)` Hours Watched and Counting: *Stranger Things* Sets the Stage for a Blockbuster Final Season*
+
+**Body:**  
+With over **`r st_total_hours_fmt`** hours of global viewing in Netflix’s Top 10 across its first four seasons, *Stranger Things* remains one of the platform’s most enduring hits. The series has appeared for **`r st_total_weeks`** total weeks in the global Top 10 and has charted in **`r st_country_count`** countries, underscoring its worldwide appeal. Within English-language TV, *Stranger Things* is **`r ifelse(is.na(st_rank), "a top performer", paste0("#", st_rank))`** by total hours—`r st_comp_phrase` A clear fan favorite, **`r st_top_season_name`** alone drew **`r st_top_season_hours`** hours.
+
+```{r}
+#| label: pr1-stranger-bar
+#| message: false
+#| warning: false
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+#| fig-cap: "Stranger Things — total global viewing hours by season"
+library(ggplot2)
+
+plot_df <- st_by_season |>
+  dplyr::mutate(season = ifelse(is.na(season_title) | season_title %in% c("N/A",""),
+                                "Unknown season", season_title))
+
+ggplot(plot_df, aes(x = reorder(season, hours), y = hours, fill = season)) +
+  geom_col(width = 0.7) +
+  coord_flip() +
+  scale_y_continuous(
+    labels = scales::label_number(scale_cut = scales::cut_short_scale())
+  ) +
+  # Colorful, readable palette; switch to "Dark2" or "Set3" if you prefer
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Stranger Things — total global hours by season",
+    x = NULL, y = "Global hours viewed", fill = "Season"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(face = "bold")
+  )
+```
+
+
+## Press Release 2: Commercial Success in India
+
+```{r}
+#| label: pr2-india-facts
+#| message: false
+#| warning: false
+library(dplyr)
+library(lubridate)
+library(scales)
+
+# 1) Standardize & prep
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 |>
+  rename(country = any_of(c("country","country_name")))
+
+india_all <- COUNTRY_TOP_10 |>
+  filter(country == "India") |>
+  mutate(program = if_else(is.na(season_title) | season_title %in% c("N/A",""),
+                           show_title, paste(show_title, "\u2014", season_title)))
+
+us_all <- COUNTRY_TOP_10 |>
+  filter(country == "United States") |>
+  mutate(program = if_else(is.na(season_title) | season_title %in% c("N/A",""),
+                           show_title, paste(show_title, "\u2014", season_title)))
+
+# 2) Window: last 52 weeks if available, otherwise all history
+end_week <- max(india_all$week, na.rm = TRUE)
+india_52 <- india_all |> filter(week > end_week - 364)
+india_win <- if (nrow(india_52) > 0) india_52 else india_all
+us_win    <- if (nrow(india_52) > 0) (us_all |> filter(week > end_week - 364)) else us_all
+pr2_window_label <- if (nrow(india_52) > 0) "last 52 weeks" else "entire history"
+start_week <- min(india_win$week, na.rm = TRUE)
+end_week   <- max(india_win$week, na.rm = TRUE)
+
+# 3) Engagement summary (Σ[11 − rank])
+eng_summary <- india_win |> mutate(score = 11 - weekly_rank)
+pr2_entries <- comma(nrow(eng_summary))
+pr2_score   <- comma(sum(eng_summary$score, na.rm = TRUE))
+
+# 4) Top India programs (by engagement)
+ind_ranked <- eng_summary |>
+  group_by(program, show_title, season_title) |>
+  summarise(score = sum(score, na.rm = TRUE), .groups = "drop") |>
+  arrange(desc(score))
+picks_vec  <- head(unique(na.omit(ind_ranked$program)), 3)
+pr2_picks  <- if (length(picks_vec) > 0) paste(picks_vec, collapse = ", ") else "recent local hits"
+
+# 5) Hours proxy from GLOBAL for those picks within the same window
+keys <- india_win |> filter(program %in% picks_vec) |> distinct(show_title, season_title)
+cand <- GLOBAL_TOP_10 |>
+  semi_join(keys, by = c("show_title","season_title")) |>
+  filter(week >= start_week, week <= end_week)
+if (nrow(cand) == 0) {
+  cand <- GLOBAL_TOP_10 |>
+    semi_join(distinct(keys, show_title), by = "show_title") |>
+    filter(week >= start_week, week <= end_week)
+}
+hours_proxy <- sum(cand$weekly_hours_viewed, na.rm = TRUE)
+
+# 6) Back-of-envelope audience (5 hours/member/week)
+weeks_span    <- max(1, as.numeric(difftime(end_week, start_week, units = "weeks")))
+est_members_m <- round((hours_proxy / weeks_span) / 5 / 1e6, 1)
+
+# 7) Strings for inline prose
+pr2_hours   <- comma(hours_proxy)
+pr2_members <- paste0(est_members_m, " million")
+```
+
+**Headline:** *Local Hits Power Netflix India’s Momentum*
+
+**Body:**  
+Over the **`r pr2_window_label`**, Netflix titles reached India’s Top 10 **`r pr2_entries`** times, delivering strong engagement (rank-weighted score **`r pr2_score`**). Recent audience favorites include **`r pr2_picks`**. Using global viewing for these India hits over the same period, we estimate **`r pr2_hours`** hours watched—roughly **`r pr2_members`** weekly members at **5 hours per member per week**.
+
+```{r}
+#| label: pr2-india-chart-debuts-bar
+#| message: false
+#| warning: false
+#| echo: false
+#| fig-width: 8
+#| fig-height: 4.8
+#| fig-cap: "Weekly debuts in India Top-10 by language (stacked bars)"
+library(ggplot2)
+library(dplyr)
+
+# Language map from GLOBAL (English vs Non-English)
+lang_map_full <- GLOBAL_TOP_10 |>
+  mutate(lang = ifelse(grepl("Non-English", category), "Non-English", "English")) |>
+  distinct(show_title, season_title, lang)
+
+lang_map_title <- GLOBAL_TOP_10 |>
+  mutate(lang = ifelse(grepl("Non-English", category), "Non-English", "English")) |>
+  distinct(show_title, lang)
+
+# Attach language to India rows (season match, fallback to title match)
+india_lang <- india_win |>
+  left_join(lang_map_full,  by = c("show_title","season_title")) |>
+  left_join(lang_map_title, by = "show_title", suffix = c("", "_title")) |>
+  mutate(lang = dplyr::coalesce(lang, lang_title, "English")) |>
+  select(-lang_title)
+
+# Weekly debuts by language
+debuts <- india_lang |>
+  arrange(week, program) |>
+  group_by(program) |>
+  mutate(is_debut = week == min(week)) |>
+  ungroup() |>
+  group_by(week, lang) |>
+  summarise(debuts = sum(is_debut, na.rm = TRUE), .groups = "drop")
+
+# Bar chart (stacked)
+ggplot(debuts, aes(x = week, y = debuts, fill = lang)) +
+  geom_col(width = 6) +  # ~6-day width to match weekly spacing
+  labs(
+    title = paste0("India Top-10 debuts by language (", pr2_window_label, ")"),
+    x = NULL, y = "Number of debuts", fill = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top", plot.title = element_text(face = "bold"))
+```
+
+## Press Release 3: Open Topic — Global Launch Momentum
+
+```{r}
+#| label: pr3-debut-facts
+#| message: false
+#| warning: false
+library(dplyr)
+library(scales)
+
+# 1) Standardize country column and build a program label
+COUNTRY_TOP_10 <- COUNTRY_TOP_10 |>
+  rename(country = any_of(c("country","country_name")))
+
+ctry <- COUNTRY_TOP_10 |>
+  mutate(program = if_else(is.na(season_title) | season_title %in% c("N/A",""),
+                           show_title, paste(show_title, "\u2014", season_title)))
+
+# 2) Global debut week of each program (first week it appears anywhere)
+debut_week <- ctry |>
+  group_by(program, show_title, season_title, category) |>
+  summarise(global_debut = min(week, na.rm = TRUE), .groups = "drop")
+
+# 3) Countries where each program charted in its global debut week
+debut_countries <- ctry |>
+  inner_join(debut_week, by = c("program","show_title","season_title","category")) |>
+  filter(week == global_debut) |>
+  group_by(program, show_title, season_title, category, global_debut) |>
+  summarise(n_countries = n_distinct(country), .groups = "drop") |>
+  arrange(desc(n_countries), program)
+
+# 4) Top program + quick stats for inline prose
+top_row <- dplyr::slice_head(debut_countries, n = 1)
+pr3_top_program <- top_row$program
+pr3_top_count   <- top_row$n_countries
+pr3_top_cat     <- top_row$category
+pr3_top_week    <- top_row$global_debut
+
+# Debut-week global viewing hours for that program (from GLOBAL table)
+pr3_top_hours <- GLOBAL_TOP_10 |>
+  mutate(program = if_else(is.na(season_title) | season_title %in% c("N/A",""),
+                           show_title, paste(show_title, "\u2014", season_title))) |>
+  filter(program == pr3_top_program, week == pr3_top_week) |>
+  summarise(h = sum(weekly_hours_viewed, na.rm = TRUE), .groups = "drop") |>
+  pull(h)
+
+pr3_top_hours_fmt <- ifelse(length(pr3_top_hours) == 0, "0", scales::comma(pr3_top_hours))
+
+# 5) Top 10 debuts (for chart) and a language share fun fact
+pr3_top10 <- debut_countries |> slice_max(n_countries, n = 10, with_ties = FALSE)
+pr3_noneng_n <- sum(grepl("Non-English", pr3_top10$category))
+pr3_noneng_share <- scales::percent(pr3_noneng_n / nrow(pr3_top10))
+```
+
+**Headline:** *Global Day-One Hits: Netflix Titles That Debut Everywhere at Once*
+
+**Body:**  
+Netflix’s global pipeline continues to deliver synchronized premieres. The biggest recent worldwide debut was **`r pr3_top_program`** (**`r pr3_top_cat`**), which landed in the Top 10 of **`r pr3_top_count`** countries in its **debut week** (`r pr3_top_week`). In that same week, viewers watched approximately **`r pr3_top_hours_fmt`** hours globally. Among the **Top 10** all-time debuts by country count, **`r pr3_noneng_share`** are **Non-English** titles—underscoring the truly international appetite for Netflix stories.
+
+```{r}
+#| label: pr3-debut-bar
+#| message: false
+#| warning: false
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: "Top programs by number of countries charted in their global debut week"
+library(ggplot2)
+
+plot_df <- pr3_top10 |>
+  mutate(lang = ifelse(grepl("Non-English", category), "Non-English", "English"))
+
+ggplot(plot_df, aes(x = reorder(program, n_countries), y = n_countries, fill = lang)) +
+  geom_col(width = 0.7) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Worldwide Debut Leaders",
+    x = NULL,
+    y = "Countries in Top 10 (debut week)",
+    fill = "Language"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top", plot.title = element_text(face = "bold"))
+```
