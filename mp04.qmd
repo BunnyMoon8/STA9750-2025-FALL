@@ -5,16 +5,23 @@ format:
   html:
     theme: cosmo
     toc: true
+    toc-title: "Navigation"
+    toc-location: left
     toc-depth: 3
     code-fold: true
     code-summary: "Show code"
-    df-print: paged
+    page-layout: article
+    navbar:
+      background: "#2C3E50"   # dark blue bar
+      foreground: "white"
+      title: "STA 9750 Submission Material"
 editor: visual
 execute:
   echo: true
   message: false
   warning: false
 ---
+
 
 ```{r setup, include=FALSE}
 # Load all required packages for the mini-project

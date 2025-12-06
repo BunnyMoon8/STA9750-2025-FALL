@@ -1,5 +1,7 @@
 project:
   type: website
+  render:
+    - mp03.qmd
   output-dir: docs
 
 website:
@@ -17,3 +19,5 @@ format:
 
 editor:
   mode: source
+  
+
