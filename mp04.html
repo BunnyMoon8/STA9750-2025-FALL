@@ -77,8 +77,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <body class="quarto-light">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
-<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
   <nav id="TOC" role="doc-toc" class="toc-active">
     <h2 id="toc-title">Navigation</h2>
    
@@ -128,8 +128,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   </ul>
 </nav>
-</div>
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
 <main class="content" id="quarto-document-content">
 
@@ -1046,7 +1044,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code># A tibble: 1 × 1
   p_value
     &lt;dbl&gt;
-1   0.008</code></pre>
+1   0.014</code></pre>
 </div>
 </div>
 <p><strong>Explanation &amp; conclusion:</strong> We first compute the observed mean revision. Then we pretend the true mean revision is 0 and, using the bootstrap, create 2,000 resampled datasets and record the mean for each. get_p_value() compares our observed mean to this simulated distribution and returns a two-sided p-value.</p>
@@ -1146,7 +1144,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code># A tibble: 1 × 1
   p_value
     &lt;dbl&gt;
-1       1</code></pre>
+1   0.976</code></pre>
 </div>
 </div>
 <p><strong>Explanation &amp; conclusion:</strong> - We convert revisions into a TRUE/FALSE variable: TRUE when the revision is negative. - We ask whether the probability of a negative revision is exactly 50%. - Under that null, we bootstrap the proportion 2,000 times and compare our observed proportion to this distribution. In your write-up, explain whether the p-value suggests that negative revisions are more or less common than positive ones, and how strong that evidence is.</p>

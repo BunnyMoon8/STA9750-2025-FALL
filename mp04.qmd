@@ -6,22 +6,15 @@ format:
     theme: cosmo
     toc: true
     toc-title: "Navigation"
-    toc-location: left
+    toc-location: right
     toc-depth: 3
     code-fold: true
     code-summary: "Show code"
-    page-layout: article
-    navbar:
-      background: "#2C3E50"   # dark blue bar
-      foreground: "white"
-      title: "STA 9750 Submission Material"
-editor: visual
 execute:
   echo: true
   message: false
   warning: false
 ---
-
 
 ```{r setup, include=FALSE}
 # Load all required packages for the mini-project
@@ -46,7 +39,9 @@ In this final mini-project for STA 9750, I use data from the Bureau of Labor Sta
 The goal is to scrape the CES total nonfarm payroll series and the published revisions, join and analyze these data, perform formal statistical tests using infer, and then evaluate a couple of claims about CES revisions using a fact-checking framework.
 
 # Task 1 — Scraping CES Total Nonfarm Payroll (Seasonally Adjusted)
+
 In this section, I scrape the CES total nonfarm payroll series (seasonally adjusted) from BLS Data Finder 1.1 using httr2 and rvest, and reshape it into a tidy table of employment levels by month.
+
 ```{r}
 # Task 1: Scrape CES Total Nonfarm Payroll (Seasonally Adjusted)
 
@@ -122,6 +117,7 @@ tail(ces_levels)
 ```
 
 # Task 2 — Scraping CES Revisions Tables (with graceful fallback)
+
 ```{r}
 # Task 2 — Scraping CES Revisions Tables (with graceful fallback)
 
@@ -219,8 +215,8 @@ revision_df |>
 
 # Task 3 — Data Integration and Exploratory Analysis
 
-In this section, I join the CES level and revision data, compute summary
-statistics, and create four visualizations to understand revision patterns.
+In this section, I join the CES level and revision data, compute summary statistics, and create four visualizations to understand revision patterns.
+
 ```{r}
 # Join CES levels (Task 1) and revisions (Task 2)
 
@@ -300,6 +296,7 @@ ces_decade_stats
 ```
 
 ## Employment level over time
+
 ```{r}
 ggplot(ces_full, aes(x = date, y = level)) +
 geom_line() +
@@ -312,6 +309,7 @@ y = "Employment level (thousands of jobs)"
 ```
 
 ## Revisions over time
+
 ```{r}
 ggplot(ces_full, aes(x = date, y = revision)) +
 geom_hline(yintercept = 0, linetype = "dashed") +
@@ -326,6 +324,7 @@ y = "Revision (thousands of jobs)"
 ```
 
 ## Absolute revision as a share of employment level
+
 ```{r}
 ggplot(ces_full, aes(x = date, y = rev_share)) +
 geom_line(na.rm = TRUE) +
@@ -339,6 +338,7 @@ y = "Revision / Level"
 ```
 
 ## Distribution of revisions by calendar month
+
 ```{r}
 ggplot(ces_full, aes(x = month_lab, y = revision)) +
 geom_boxplot(na.rm = TRUE) +
@@ -351,9 +351,11 @@ y = "Revision (thousands of jobs)"
 ```
 
 # Task 4 — Statistical Inference
+
 In this section, I use the cleaned CES revision data to conduct formal hypothesis tests. These tests help determine whether revisions tend to be systematically positive or negative, and whether the fraction of negative revisions has changed over time.
 
 ## Prepare data for hypothesis tests
+
 ```{r}
 # Keep only months with non-missing revision values
 
@@ -389,10 +391,7 @@ note = "Not enough non-missing revision observations to run t_test in this rende
 
 **Explanation**
 
-This test asks whether the mean revision (final minus original estimate) is significantly different from zero.
-Null hypothesis (H₀): The average revision equals 0.
-Alternative hypothesis (Hₐ): The average revision is not equal to 0.
-If revisions are centered on zero, it suggests there is no systematic upward or downward bias in the BLS revisions.
+This test asks whether the mean revision (final minus original estimate) is significantly different from zero. Null hypothesis (H₀): The average revision equals 0. Alternative hypothesis (Hₐ): The average revision is not equal to 0. If revisions are centered on zero, it suggests there is no systematic upward or downward bias in the BLS revisions.
 
 **Conclusion**
 
@@ -422,23 +421,24 @@ note = "Not enough data in both pre- and post-2000 periods to run prop_test in t
 
 This test checks whether the percentage of downward revisions changed between:
 
-- Before 2000, and
-- 2000 and later
+-   Before 2000, and
+-   2000 and later
 
 We use a two-sample proportion test:
 
-- H₀: The share of negative revisions is the same in both periods.
-- Hₐ: The shares differ.
+-   H₀: The share of negative revisions is the same in both periods.
+-   Hₐ: The shares differ.
 
 **Conclusion**
 
 Based on the output, the difference in the proportion of negative revisions before and after 2000 is not statistically significant. This means we do not find evidence that revisions have become more negative (or more positive) in the post-2000 period.
 
 ## Interpretation of Task 4 Results
+
 **The two tests together indicate:**
 
-- CES revisions are not systematically biased in either direction.
-- The tendency for revisions to be negative has not significantly changed after 2000.
+-   CES revisions are not systematically biased in either direction.
+-   The tendency for revisions to be negative has not significantly changed after 2000.
 
 These findings provide a statistical foundation for evaluating claims about whether CES revisions are “always wrong,” “always downward,” or “getting worse.”
 
@@ -491,18 +491,16 @@ head()
 
 This chunk builds a calendar of presidents by year and month, labels each president as Democrat (“D”) or Republican (“R”), and then merges that information into the CES dataset. The new table ces_party now tells us, for each month, which president and party “owned” that jobs report.
 
-**Conclusion**
-With ces_party we can examine whether revision patterns differ systematically across political parties.
+**Conclusion** With ces_party we can examine whether revision patterns differ systematically across political parties.
 
 ## Claim 1 — “Under Democrats, BLS always revises job numbers down; Republicans are treated fairly.”
 
-A hypothetical commentator claims:
-- “When Democrats are in the White House, BLS constantly revises job numbers down, but under Republicans the revisions are basically unbiased.”
-- This implies that the mean revision is more negative under Democratic presidents than under Republican presidents.
+A hypothetical commentator claims: - “When Democrats are in the White House, BLS constantly revises job numbers down, but under Republicans the revisions are basically unbiased.” - This implies that the mean revision is more negative under Democratic presidents than under Republican presidents.
 
 ## Test 1a — Compare mean revisions by party
 
 ## Keep months with non-missing revisions and known party
+
 ```{r}
 claim1_data <- ces_party |>
 filter(!is.na(revision), !is.na(party))
@@ -527,27 +525,15 @@ note = "Not enough non-missing revisions for both parties to run t_test in this 
 
 **Explanation**
 
-First I filter to months that have a revision and a party label. Then I run a two-sample t-test:
-Response: revision (final – original estimate)
-Groups: Republican vs. Democratic months
-The estimate from t_test is:
-mean revision
-D
-−
-mean revision
-R
-mean revision 
-D
-​	
- −mean revision 
-R
-​	
- 
+First I filter to months that have a revision and a party label. Then I run a two-sample t-test: Response: revision (final – original estimate) Groups: Republican vs. Democratic months The estimate from t_test is: mean revision D − mean revision R mean revision D ​\
+−mean revision R ​
+
 **Conclusio**
 
 In my render, the difference in mean revisions between Democratic and Republican presidents is small and the p-value is not statistically significant. This does not support the idea that BLS systematically revises job numbers downward only under Democrats.
 
 ## Test 1b — Proportion of negative revisions by party
+
 ```{r}
 if (n_claim1 >= 20 && length(unique(claim1_data$party)) == 2) {
 claim1_prop <- claim1_data |>
@@ -563,13 +549,9 @@ note = "Not enough data for both parties to run prop_test in this render."
 }
 ```
 
-**Explanation**
-Here I turn revisions into a TRUE/FALSE variable (is_negative) and use a two-sample proportion test:
-H₀: The fraction of negative revisions is the same under Democrats and Republicans.
-Hₐ: The fractions differ.
+**Explanation** Here I turn revisions into a TRUE/FALSE variable (is_negative) and use a two-sample proportion test: H₀: The fraction of negative revisions is the same under Democrats and Republicans. Hₐ: The fractions differ.
 
-**Conclusion**
-The estimated difference in the share of negative revisions between parties is small, and the p-value is again not significant. This indicates that months under Democratic presidents are not systematically more likely to have downward revisions than months under Republican presidents.
+**Conclusion** The estimated difference in the share of negative revisions between parties is small, and the p-value is again not significant. This indicates that months under Democratic presidents are not systematically more likely to have downward revisions than months under Republican presidents.
 
 ## Descriptive statistics used in the fact check
 
@@ -589,21 +571,15 @@ claim1_stats
 
 **Explanation**
 
-This table reports, by party:
-Number of months with published revisions
-Average revision (could be positive or negative)
-Average absolute revision size
-Fraction of months with negative revisions
-These are the “at least 3 numbers” supporting the claim evaluation.
+This table reports, by party: Number of months with published revisions Average revision (could be positive or negative) Average absolute revision size Fraction of months with negative revisions These are the “at least 3 numbers” supporting the claim evaluation.
 
 **Conclusion (Fact-o-Meter rating)**
 
 Across presidents of both parties, mean revisions are near zero, the average size of revisions is similar, and the fraction of downward revisions is not dramatically higher under Democrats. Together with the non-significant t-test and proportion test, I would rate this claim as “Mostly False”.
 
 ## Claim 2 — “Big original job changes lead to bigger revisions.”
-Another hypothetical claim is:
-“When the original jobs report shows a big change in employment, the BLS revision is much larger too. Small reports don’t get big revisions.”
-This claim connects levels / changes (Task 1) to revisions (Task 2), satisfying the requirement to use both.
+
+Another hypothetical claim is: “When the original jobs report shows a big change in employment, the BLS revision is much larger too. Small reports don’t get big revisions.” This claim connects levels / changes (Task 1) to revisions (Task 2), satisfying the requirement to use both.
 
 ## Define “large” underlying changes and compare revision sizes
 
@@ -641,14 +617,9 @@ note = "Not enough data in both large and small change groups to run t_test in t
 }
 ```
 
-**Explanation**
-Here I compute the absolute month-to-month change in employment (abs_change) and label a month as a large change if it exceeds 200 thousand jobs. Then I compare the absolute revisions (abs_revision) for:
-Months with large underlying changes
-Months with smaller changes
-Using a two-sample t-test, we test whether big underlying changes are associated with larger revisions on average.
+**Explanation** Here I compute the absolute month-to-month change in employment (abs_change) and label a month as a large change if it exceeds 200 thousand jobs. Then I compare the absolute revisions (abs_revision) for: Months with large underlying changes Months with smaller changes Using a two-sample t-test, we test whether big underlying changes are associated with larger revisions on average.
 
-**Conclusion**
-In my results, the mean absolute revision is somewhat larger for months with large original changes, and the p-value is small enough to suggest a statistically significant difference. That means large underlying job swings do tend to be revised by a bigger amount, though the average difference is still modest compared with the total employment level.
+**Conclusion** In my results, the mean absolute revision is somewhat larger for months with large original changes, and the p-value is small enough to suggest a statistically significant difference. That means large underlying job swings do tend to be revised by a bigger amount, though the average difference is still modest compared with the total employment level.
 
 ## Descriptive statistics for Claim 2
 
@@ -668,12 +639,7 @@ claim2_stats
 
 **Explanation**
 
-This summary table shows, for large vs small underlying changes:
-Number of months
-Average size of the employment change
-Average absolute revision
-Average revision as a percent of the employment level
-These statistics complement the t-test by showing the typical magnitude of both the original moves and the revisions.
+This summary table shows, for large vs small underlying changes: Number of months Average size of the employment change Average absolute revision Average revision as a percent of the employment level These statistics complement the t-test by showing the typical magnitude of both the original moves and the revisions.
 
 **Conclusion (Fact-o-Meter rating)**
 
@@ -681,27 +647,21 @@ Large employment moves are indeed associated with somewhat larger revisions, and
 
 ## Linking back to earlier plots
 
-- For both claims, the visualizations from Task 3 support the statistical findings:
-- The “Revisions over time” plot shows revisions fluctuating around zero with no obvious long-run partisan trend.
-The “Distribution of revisions by calendar month” and “Absolute revision as a share of employment level” plots show that most revisions are modest in size relative to total employment.
-- Overall, the data suggest that CES revisions are noisy but not wildly biased, and political narratives about “weaponized” revisions are not strongly supported by the historical record.
+-   For both claims, the visualizations from Task 3 support the statistical findings:
+-   The “Revisions over time” plot shows revisions fluctuating around zero with no obvious long-run partisan trend. The “Distribution of revisions by calendar month” and “Absolute revision as a share of employment level” plots show that most revisions are modest in size relative to total employment.
+-   Overall, the data suggest that CES revisions are noisy but not wildly biased, and political narratives about “weaponized” revisions are not strongly supported by the historical record.
 
 # Extra Credit — Computationally Intensive Inference with infer
 
 ## A. Non-technical explanation: what is “computationally intensive” inference?
 
-Traditional hypothesis tests (like the t-test) use formulas that assume things such as normal distributions and large samples.
-Computationally intensive methods, like the bootstrap and permutation tests, take a different approach:
-Instead of relying on formulas, we re-create many “fake” datasets on the computer.
+Traditional hypothesis tests (like the t-test) use formulas that assume things such as normal distributions and large samples. Computationally intensive methods, like the bootstrap and permutation tests, take a different approach: Instead of relying on formulas, we re-create many “fake” datasets on the computer.
 
-For each fake dataset, we recalculate the statistic we care about (mean, median, proportion, etc.).
-The spread of these recalculated values tells us what kind of variation we would expect just from random chance.
+For each fake dataset, we recalculate the statistic we care about (mean, median, proportion, etc.). The spread of these recalculated values tells us what kind of variation we would expect just from random chance.
 
 We then compare our actual statistic to this simulated distribution. If our observed value is very extreme relative to the simulated ones, we say it is unlikely to be due to chance → small p-value.
 
-In words:
-- Rather than trusting a formula on paper, we let the computer “re-run history” thousands of times to see how unusual our real result is.
-- These tools are very flexible. They work even when formulas are messy, when the distribution is skewed, or when we want to test medians or complicated statistics.
+In words: - Rather than trusting a formula on paper, we let the computer “re-run history” thousands of times to see how unusual our real result is. - These tools are very flexible. They work even when formulas are messy, when the distribution is skewed, or when we want to test medians or complicated statistics.
 
 ## B. Setup for extra-credit tests
 
@@ -751,14 +711,9 @@ get_p_value(obs_stat = obs_mean$stat, direction = "two-sided")
 boot_p_mean
 ```
 
-**Explanation & conclusion:**
-We first compute the observed mean revision.
-Then we pretend the true mean revision is 0 and, using the bootstrap, create 2,000 resampled datasets and record the mean for each.
-get_p_value() compares our observed mean to this simulated distribution and returns a two-sided p-value.
+**Explanation & conclusion:** We first compute the observed mean revision. Then we pretend the true mean revision is 0 and, using the bootstrap, create 2,000 resampled datasets and record the mean for each. get_p_value() compares our observed mean to this simulated distribution and returns a two-sided p-value.
 
-In your write-up, interpret the number in boot_p_mean$p_value:
-If it’s small (e.g., < 0.05), you can say there is bootstrap-based evidence that the average CES revision is not zero.
-If it’s large, you can say the bootstrap procedure suggests that the mean revision could plausibly be zero given the noise in the data.
+In your write-up, interpret the number in boot_p_mean\$p_value: If it’s small (e.g., \< 0.05), you can say there is bootstrap-based evidence that the average CES revision is not zero. If it’s large, you can say the bootstrap procedure suggests that the mean revision could plausibly be zero given the noise in the data.
 
 ## D. Bootstrap test 2 — Is the median revision different from zero?
 
@@ -789,11 +744,7 @@ get_p_value(obs_stat = obs_median$stat, direction = "two-sided")
 boot_p_median
 ```
 
-**Explanation & conclusion:**
-- We compute the observed median revision.
-- Under the null hypothesis that the true median is 0, we bootstrap to get 2,000 possible median values.
-- The resulting p-value tells us whether our observed median is unusually far from zero compared with what we’d see by chance.
-In your narrative, compare this p-value to the one from the mean test; you can comment on whether revisions tend to be slightly positive or negative on average, and whether this is robust when you focus on the median (which is less sensitive to outliers).
+**Explanation & conclusion:** - We compute the observed median revision. - Under the null hypothesis that the true median is 0, we bootstrap to get 2,000 possible median values. - The resulting p-value tells us whether our observed median is unusually far from zero compared with what we’d see by chance. In your narrative, compare this p-value to the one from the mean test; you can comment on whether revisions tend to be slightly positive or negative on average, and whether this is robust when you focus on the median (which is less sensitive to outliers).
 
 ## E. Bootstrap test 3 — Is the probability of a negative revision equal to 50%?
 
@@ -829,11 +780,7 @@ get_p_value(obs_stat = obs_prop_neg$stat, direction = "two-sided")
 boot_p_prop_neg
 ```
 
-**Explanation & conclusion:**
-- We convert revisions into a TRUE/FALSE variable: TRUE when the revision is negative.
-- We ask whether the probability of a negative revision is exactly 50%.
-- Under that null, we bootstrap the proportion 2,000 times and compare our observed proportion to this distribution.
-In your write-up, explain whether the p-value suggests that negative revisions are more or less common than positive ones, and how strong that evidence is.
+**Explanation & conclusion:** - We convert revisions into a TRUE/FALSE variable: TRUE when the revision is negative. - We ask whether the probability of a negative revision is exactly 50%. - Under that null, we bootstrap the proportion 2,000 times and compare our observed proportion to this distribution. In your write-up, explain whether the p-value suggests that negative revisions are more or less common than positive ones, and how strong that evidence is.
 
 ## F. Schematic “how-to” visualization (conceptual flowchart)
 
@@ -843,13 +790,10 @@ You can add a very simple “flowchart” using plain markdown (no code), which 
 
 How a bootstrap test works (in words)
 
-1. Start with your sample (all CES revisions).
-2. Define the null hypothesis (e.g., “true mean revision = 0”).
-3. Resample with replacement from the data to create a new “bootstrap” dataset.
-4. Recalculate the statistic (mean, median, or proportion).
-5. Repeat steps 3–4 thousands of times to build a distribution of the statistic under the null.
-6. Locate the observed statistic on this bootstrap distribution.
-The p-value is the fraction of bootstrap statistics that are at 7. least as extreme as what we observed.
-8. Use this p-value to decide whether the data provide strong evidence against the null.
-
-
+1.  Start with your sample (all CES revisions).
+2.  Define the null hypothesis (e.g., “true mean revision = 0”).
+3.  Resample with replacement from the data to create a new “bootstrap” dataset.
+4.  Recalculate the statistic (mean, median, or proportion).
+5.  Repeat steps 3–4 thousands of times to build a distribution of the statistic under the null.
+6.  Locate the observed statistic on this bootstrap distribution. The p-value is the fraction of bootstrap statistics that are at 7. least as extreme as what we observed.
+7.  Use this p-value to decide whether the data provide strong evidence against the null.
