@@ -724,7 +724,7 @@ ggplot(hh_plot, aes(x = year, y = avg_household_size,
 ## Building Indices of Housing Affordability and Housing Stock Growth
 
 **Rent Burden**
-```[r]
+```{r}
 # Task 4 — Rent Burden metric + two DT tables (self-contained)
 
 library(dplyr)
