@@ -1,8 +1,5 @@
 project:
   type: website
-  render:
-    - mp03.qmd
-    - mp04.qmd
   output-dir: docs
 
 website:
@@ -12,12 +9,28 @@ website:
   navbar:
     background: primary
     search: false
+    right:
+      - text: "Home"
+        href: index.html
+      - text: "Mini Projects"
+        menu:
+          - text: "MP01 – Netflix"
+            href: mp01.html
+          - text: "MP02 – Housing & Income"
+            href: mp02.html
+          - text: "MP03 – Trees & Districts"
+            href: mp03.html
+          - text: "MP04 – CES Employment"
+            href: mp04.html
 
 format:
   html:
-    theme: sandstone
-    toc: false
+    theme: cosmo
+    toc: true
+    toc-location: right
+    page-layout: full
+    smooth-scroll: true
+    css: styles.css
 
 editor:
   mode: source
-

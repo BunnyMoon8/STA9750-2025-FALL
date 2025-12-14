@@ -1,0 +1,38 @@
+.project-card {
+  background: #fffaff;
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+  border: 1px solid #ee87fa;
+}
+
+.project-meta {
+  font-size: 0.85rem;
+  color: #9d4cd4;
+  margin-bottom: 0.4rem;
+}
+
+a.project-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #ee87fa;
+  font-size: 0.9rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a.project-link:hover {
+  background-color: #ee87fa;
+  color: #fffaff;
+  text-decoration: none;
+}
+
+.footer {
+  margin-top: 3rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #9d4cd4;
+}

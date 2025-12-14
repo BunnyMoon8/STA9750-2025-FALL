@@ -1,12 +1,16 @@
 ---
 title: "Selena Li — STA 9750 Portfolio"
+author: "Selena Li"
 engine: knitr
+output:
+  html_document:
+    theme: cosmo
+    css: styles.css 
 ---
 
 
 Hi! I’m **Selena Li**. This site hosts my STA 9750 mini-projects and course project.
 
-- - -
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 if (!require("leaflet")) {
   options(repos = c(CRAN = "https://cloud.r-project.org"))
@@ -23,4 +27,37 @@ leaflet() |>
   addPopups(baruch_longitude, baruch_latitude,
             "I am a Master's student at <b>Baruch College</b>!")
 ```
+# Mini Projects
+
+<div class="project-card">
+  <h3>Mini Project 1 — Netflix Top 10 Analysis</h3>
+  <p class="project-meta">Streaming analytics • EDA • Visualization</p>
+  <p>Exploring streaming trends using title-level viewing data.</p>
+  <a class="project-link" href="mp01.html" target="_blank">View Project →</a>
+</div>
+<div class="project-card">
+  <h3>Mini Project 2 — Housing, Income & Growth</h3>
+  <p class="project-meta">ACS data • Socioeconomic trends • Permits</p>
+  <p>ACS socioeconomic trends and NYC building-permit patterns.</p>
+  <a class="project-link" href="mp02.html" target="_blank">View Project →</a>
+</div>
+<div class="project-card">
+  <h3>Mini Project 3 — NYC Trees & Council Districts</h3>
+  <p class="project-meta">Spatial data • Mapping • Urban environment</p>
+  <p>Spatial analysis linking tree density and district-level characteristics.</p>
+  <a class="project-link" href="mp03.html" target="_blank">View Project →</a>
+</div>
+
+<div class="project-card">
+  <h3>Mini Project 4 — CES Employment & Revisions</h3>
+  <p class="project-meta">Time series • BLS CES • Revisions</p>
+  <p>Time series trends and BLS revision patterns for employment estimates.</p>
+  <a class="project-link" href="mp04.html" target="_blank">View Project →</a>
+</div>
+
+<div class="footer">
+  ✨ Thank you for visiting my STA 9750 project portfolio! ✨  
+  <br><br>
+  © 2025 Selena Li — Baruch College
+</div>
 
