@@ -1,7 +1,14 @@
 project:
   type: website
   output-dir: docs
-
+  render:
+    - index.qmd
+    - mp01.qmd
+    - mp02.qmd
+    - mp03.qmd
+    - mp04.qmd
+    - Individual_Report.qmd
+    
 website:
   title: "STA 9750 Submission Material"
   description: "Course Projects for STA 9750 at Baruch College"
