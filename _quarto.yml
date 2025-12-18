@@ -22,6 +22,10 @@ website:
             href: mp03.html
           - text: "MP04 – CES Employment"
             href: mp04.html
+      - text: "Group Report"
+        href: "https://xiuyinglan.github.io/STA9750-2025-FALL/group_report.html"
+      - text: "Individual Report"
+        href: Individual_Report.html
 
 format:
   html:

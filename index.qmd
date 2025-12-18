@@ -55,6 +55,34 @@ leaflet() |>
   <a class="project-link" href="mp04.html" target="_blank">View Project →</a>
 </div>
 
+# Individual Report
+
+<div class="project-card highlight">
+  <h3>Course Project — Individual Report</h3>
+  <p class="project-meta">NYC Traffic • 311 Complaints • Statistical Analysis</p>
+  <p>
+    An in-depth individual analysis examining whether persistently high-traffic
+    street segments generate disproportionately more air quality and idling
+    vehicle complaints compared to nearby lower-traffic segments.
+  </p>
+  <a class="project-link" href="individual_report.html" target="_blank">
+    View Full Report →
+  </a>
+</div>
+
+# Group Project Report
+
+<div class="project-card">
+  <h3>Traffic, Complaints, and Urban Infrastructure in New York City</h3>
+  <p>
+    A collaborative group analysis examining relationships between traffic
+    volume, noise, air quality, and street-condition complaints across NYC.
+  </p >
+  <a href=" " target="_blank">
+    View Group Report →
+  </a >
+</div>
+
 <div class="footer">
   ✨ Thank you for visiting my STA 9750 project portfolio! ✨  
   <br><br>
